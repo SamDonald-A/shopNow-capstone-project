@@ -11,7 +11,7 @@ vpc_cni_role_name = "AmazonEKSVPCCNIRole-sam-eks-cluster"
 aws_lbc_role_name = "aws-lbc-sam-eks-cluster"
 
 # VPC configuration
-vpc_name = "sam-shopnow-eks"
+vpc_name = "sam-shopnow-vpc"
 vpc_cidr = "10.0.0.0/16"
 
 azs = [
