@@ -11,7 +11,7 @@ pipeline {
     parameters {
         booleanParam(
             name: 'DESTROY_INFRA',
-            defaultValue: false,
+            defaultValue: true,
             description: 'Destroy infrastructure'
         )
     }
