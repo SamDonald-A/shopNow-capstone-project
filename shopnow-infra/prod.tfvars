@@ -36,3 +36,10 @@ tags = {
   Owner       = "Sam"
   ManagedBy   = "terraform"
 }
+
+# EC2
+
+ami = "ami-04df1508c6be5879e"
+instance_type = "t3.medium"
+key_name = "sam-capstone"
+tag_name = "capstone-ansible-tf"

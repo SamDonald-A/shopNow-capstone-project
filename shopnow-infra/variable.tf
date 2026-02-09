@@ -72,3 +72,23 @@ variable "environment" {
   description = "Deployment environment (dev, uat, prod)"
   type        = string
 }
+
+variable "ami" {
+  description = "Amazon images"
+  type        = string
+}
+
+variable "key_name" {
+  description = "Pem Key"
+  type        = string
+}
+
+variable "tag_name" {
+  description = "Name of the instance"
+  type        = string
+}
+
+variable "instance_type" {
+  description = "Type of the instance"
+  type        = string
+}

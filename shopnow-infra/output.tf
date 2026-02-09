@@ -9,3 +9,7 @@ output "private_subnet_ids" {
 output "eks_private_subnet_ids" {
   value = module.vpc.private_subnets
 }
+
+output "public_ip" {
+   value = aws_instance.ubuntu.public_ip
+}

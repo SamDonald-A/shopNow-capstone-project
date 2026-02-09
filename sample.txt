@@ -1,0 +1,13 @@
+pipeline {
+    agent any
+    stages {
+        stage('Build') {
+            when {
+                changeset "path/to/your/folder/**"
+            }
+            steps {
+                echo 'Only runs when files in this folder change'
+            }
+        }
+    }
+}

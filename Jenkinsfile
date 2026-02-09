@@ -4,13 +4,15 @@ pipeline {
     environment {
         AWS_DEFAULT_REGION = "eu-west-3"
         TFVARS_FILE       = "prod.tfvars"
+        TERRAFORM_DIR     = "shopnow-infra"
+        ANSIBLE_DIR       = "ansible"
     }
 
     parameters {
         booleanParam(
             name: 'DESTROY_INFRA',
-            defaultValue: true,
-            description: 'Set to true to destroy infrastructure'
+            defaultValue: false,
+            description: 'Destroy infrastructure'
         )
     }
 
@@ -24,7 +26,7 @@ pipeline {
 
         stage('Terraform Init') {
             steps {
-                dir('shopnow-infra') {
+                dir(env.TERRAFORM_DIR) {
                     sh 'terraform init -upgrade'
                 }
             }
@@ -32,7 +34,7 @@ pipeline {
 
         stage('Terraform Validate') {
             steps {
-                dir('shopnow-infra') {
+                dir(env.TERRAFORM_DIR) {
                     sh 'terraform validate'
                 }
             }
@@ -40,11 +42,11 @@ pipeline {
 
         stage('Terraform Plan') {
             when {
-                expression { !params.DESTROY }
+                expression { !params.DESTROY_INFRA }
             }
             steps {
-                dir('shopnow-infra') {
-                    sh 'terraform plan -var-file=${TFVARS_FILE} -out=tfplan'
+                dir(env.TERRAFORM_DIR) {
+                    sh "terraform plan -var-file=${TFVARS_FILE} -out=tfplan"
                 }
             }
         }
@@ -54,8 +56,49 @@ pipeline {
                 expression { !params.DESTROY_INFRA }
             }
             steps {
-                dir('shopnow-infra') {
+                dir(env.TERRAFORM_DIR) {
                     sh 'terraform apply -auto-approve tfplan'
+                }
+            }
+        }
+
+        stage('Generate Ansible Inventory') {
+            when {
+                expression { !params.DESTROY_INFRA }
+            }
+            steps {
+                dir(env.TERRAFORM_DIR) {
+                    script {
+                        def publicIp = sh(
+                            script: "terraform output -raw ec2_public_ip",
+                            returnStdout: true
+                        ).trim()
+
+                        sh """
+                        mkdir -p ../${ANSIBLE_DIR}
+                        cat <<EOF > ../${ANSIBLE_DIR}/inventory.ini
+[Ubuntu_Servers]
+${publicIp} ansible_user=ubuntu
+EOF
+                        """
+                    }
+                }
+            }
+        }
+
+        stage('Run Ansible Playbook') {
+            when {
+                expression { !params.DESTROY_INFRA }
+            }
+            steps {
+                sshagent(credentials: ['ec2-ubuntu-key']) {
+                    dir(env.ANSIBLE_DIR) {
+                        sh '''
+                          ansible-playbook \
+                            -i inventory.ini \
+                            install-devops-tools.yml
+                        '''
+                    }
                 }
             }
         }
@@ -65,8 +108,8 @@ pipeline {
                 expression { params.DESTROY_INFRA }
             }
             steps {
-                dir('shopnow-infra') {
-                    sh 'terraform destroy -auto-approve -var-file=${TFVARS_FILE}'
+                dir(env.TERRAFORM_DIR) {
+                    sh "terraform destroy -auto-approve -var-file=${TFVARS_FILE}"
                 }
             }
         }
@@ -74,27 +117,17 @@ pipeline {
 
     post {
         success {
-            script {
-                if (params.DESTROY_INFRA) {
-                    echo "✅ Terraform DESTROY completed successfully"
-                } else {
-                    echo "✅ Terraform APPLY completed successfully"
-                }
-            }
+            echo params.DESTROY_INFRA ?
+                "✅ Terraform DESTROY completed" :
+                "✅ Terraform APPLY + Ansible completed"
         }
-
         failure {
-            script {
-                if (params.DESTROY_INFRA) {
-                    echo "❌ Terraform DESTROY failed — check logs"
-                } else {
-                    echo "❌ Terraform APPLY failed — check logs"
-                }
-            }
+            echo params.DESTROY_INFRA ?
+                "❌ Terraform DESTROY failed" :
+                "❌ Terraform APPLY / Ansible failed"
         }
-
         always {
-            echo "ℹ️ Terraform pipeline finished (success or failure)"
+            echo "ℹ️ Pipeline execution finished"
         }
     }
 }
