@@ -1,0 +1,110 @@
+pipeline {
+    agent any
+    
+    environment {
+        AWS_REGION = 'eu-west-2'
+        ECR_REGISTRY = "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com"
+        ECR_REPOSITORY = 'jatin-capstone'
+        IMAGE_TAG = "${SERVICE_NAME}-${BUILD_NUMBER}"
+        K8S_NAMESPACE = 'default'
+        SERVICE_DIR = 'admin'
+        SERVICE_NAME = 'admin'
+    }
+    
+    options {
+        timestamps()
+        timeout(time: 30, unit: 'MINUTES')
+    }
+    
+    stages {
+        stage('Check for Changes') {
+            steps {
+                script {
+                    echo '🔍 Checking for changes in admin/ or helm/admin/ directories...'
+                    
+                    def changes = sh(
+                        script: '''
+                            if [ "${GIT_PREVIOUS_COMMIT}" = "" ]; then
+                                echo "true"
+                            else
+                                git diff --name-only ${GIT_PREVIOUS_COMMIT} ${GIT_COMMIT} | grep -E "^(admin/|helm/admin/|jenkins/Jenkinsfile.cicd.admin)" || echo "false"
+                            fi
+                        ''',
+                        returnStdout: true
+                    ).trim()
+                    
+                    if (changes == "false") {
+                        echo "⏭️  No changes in admin/ or helm/admin/ directories. Skipping build."
+                        currentBuild.result = 'NOT_BUILT'
+                        error("No admin changes detected - skipping pipeline")
+                    } else {
+                        echo "✅ Changes detected. Proceeding with CI/CD."
+                    }
+                }
+            }
+        }
+        
+        stage('Initialize') {
+            steps {
+                script {
+                    // Get AWS account ID
+                    env.AWS_ACCOUNT_ID = sh(
+                        script: 'aws sts get-caller-identity --query Account --output text',
+                        returnStdout: true
+                    ).trim()
+                    
+                    // Set full image name with service-specific tags
+                    env.FULL_IMAGE_NAME = "${env.ECR_REGISTRY}/${env.ECR_REPOSITORY}:${env.IMAGE_TAG}"
+                    env.LATEST_IMAGE_NAME = "${env.ECR_REGISTRY}/${env.ECR_REPOSITORY}:${env.SERVICE_NAME}-latest"
+                    
+                    echo "Image tags:"
+                    echo "  - Versioned: ${env.IMAGE_TAG}"
+                    echo "  - Latest: ${env.SERVICE_NAME}-latest"
+                    
+                    echo "🏗️  Building: ${env.FULL_IMAGE_NAME}"
+                }
+            }
+        }
+        
+        stage('Build Docker Image') {
+            steps {
+                dir("${SERVICE_DIR}") {
+                    script {
+                        echo "🐳 Building Docker image for ${SERVICE_NAME}..."
+                        sh """
+                            docker build \
+                                --build-arg NODE_ENV=production \
+                                -t ${SERVICE_NAME}:${BUILD_NUMBER} \
+                                .
+                        """
+                    }
+                }
+            }
+        }
+        
+        stage('Tag for ECR') {
+            steps {
+                script {
+                    echo "🏷️  Tagging image for ECR..."
+                    sh """
+                        # Tag with build number (for rollback)
+                        docker tag ${SERVICE_NAME}:${BUILD_NUMBER} ${FULL_IMAGE_NAME}
+                        
+                        # Tag as latest (for easy reference)
+                        docker tag ${SERVICE_NAME}:${BUILD_NUMBER} ${LATEST_IMAGE_NAME}
+                    """
+                }
+            }
+        }
+        
+        stage('Push to ECR') {
+            steps {
+                script {
+                    echo "📤 Pushing to ECR..."
+                    sh """
+                        # Login to ECR
+                        aws ecr get-login-password --region ${AWS_REGION} | \ 
+                        }
+                        }
+                        
+                    }
