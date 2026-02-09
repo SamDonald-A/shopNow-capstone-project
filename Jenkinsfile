@@ -8,14 +8,6 @@ pipeline {
         ANSIBLE_DIR       = "ansible"
     }
 
-    parameters {
-        booleanParam(
-            name: 'DESTROY_INFRA',
-            defaultValue: true,
-            description: 'Destroy infrastructure'
-        )
-    }
-
     stages {
 
         stage('Checkout') {
@@ -41,9 +33,6 @@ pipeline {
         }
 
         stage('Terraform Plan') {
-            when {
-                expression { !params.DESTROY_INFRA }
-            }
             steps {
                 dir(env.TERRAFORM_DIR) {
                     sh "terraform plan -var-file=${TFVARS_FILE} -out=tfplan"
@@ -52,9 +41,6 @@ pipeline {
         }
 
         stage('Terraform Apply') {
-            when {
-                expression { !params.DESTROY_INFRA }
-            }
             steps {
                 dir(env.TERRAFORM_DIR) {
                     sh 'terraform apply -auto-approve tfplan'
@@ -63,9 +49,6 @@ pipeline {
         }
 
         stage('Generate Ansible Inventory') {
-            when {
-                expression { !params.DESTROY_INFRA }
-            }
             steps {
                 dir(env.TERRAFORM_DIR) {
                     script {
@@ -87,9 +70,6 @@ EOF
         }
 
         stage('Run Ansible Playbook') {
-            when {
-                expression { !params.DESTROY_INFRA }
-            }
             steps {
                 sshagent(credentials: ['ec2-ubuntu-key']) {
                     dir(env.ANSIBLE_DIR) {
@@ -102,29 +82,14 @@ EOF
                 }
             }
         }
-
-        stage('Terraform Destroy') {
-            when {
-                expression { params.DESTROY_INFRA }
-            }
-            steps {
-                dir(env.TERRAFORM_DIR) {
-                    sh "terraform destroy -auto-approve -var-file=${TFVARS_FILE}"
-                }
-            }
-        }
     }
 
     post {
         success {
-            echo params.DESTROY_INFRA ?
-                "✅ Terraform DESTROY completed" :
-                "✅ Terraform APPLY + Ansible completed"
+            echo "✅ Terraform APPLY + Ansible completed successfully"
         }
         failure {
-            echo params.DESTROY_INFRA ?
-                "❌ Terraform DESTROY failed" :
-                "❌ Terraform APPLY / Ansible failed"
+            echo "❌ Pipeline failed — check logs"
         }
         always {
             echo "ℹ️ Pipeline execution finished"
