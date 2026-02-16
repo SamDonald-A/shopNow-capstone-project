@@ -5,6 +5,9 @@
   gather_facts: yes
 
   vars:
+    kubectl_version: "v1.29.2"
+    eksctl_version: "v0.174.0"
+
     apt_packages:
       - docker.io
       - unzip
@@ -12,32 +15,31 @@
       - ca-certificates
       - gnupg
       - lsb-release
+      - apt-transport-https
 
   tasks:
+
+    # ---------------- Base Packages ----------------
     - name: Update apt cache
       apt:
         update_cache: yes
 
-    - name: Install base apt packages
+    - name: Install base packages
       apt:
         name: "{{ apt_packages }}"
         state: present
 
-    - name: Start and enable Docker
+    # ---------------- Docker ----------------
+    - name: Enable and start Docker
       service:
         name: docker
         state: started
         enabled: yes
 
     # ---------------- kubectl ----------------
-    - name: Get latest kubectl version
-      shell: curl -Ls https://dl.k8s.io/release/stable.txt
-      register: kubectl_version
-      changed_when: false
-
     - name: Install kubectl
       get_url:
-        url: "https://dl.k8s.io/release/{{ kubectl_version.stdout }}/bin/linux/amd64/kubectl"
+        url: "https://dl.k8s.io/release/{{ kubectl_version }}/bin/linux/amd64/kubectl"
         dest: /usr/local/bin/kubectl
         mode: '0755'
 
@@ -46,6 +48,7 @@
       get_url:
         url: https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip
         dest: /tmp/awscliv2.zip
+        mode: '0644'
 
     - name: Unzip AWS CLI
       unarchive:
@@ -53,15 +56,13 @@
         dest: /tmp
         remote_src: yes
 
-    - name: Install AWS CLI
-      command: /tmp/aws/install
-      args:
-        creates: /usr/local/bin/aws
+    - name: Install or Update AWS CLI
+      command: /tmp/aws/install --update
 
     # ---------------- eksctl ----------------
     - name: Download eksctl
       get_url:
-        url: https://github.com/weaveworks/eksctl/releases/latest/download/eksctl_Linux_amd64.tar.gz
+        url: "https://github.com/weaveworks/eksctl/releases/download/{{ eksctl_version }}/eksctl_Linux_amd64.tar.gz"
         dest: /tmp/eksctl.tar.gz
 
     - name: Install eksctl
@@ -72,8 +73,19 @@
         mode: '0755'
 
     # ---------------- Helm ----------------
-    - name: Install Helm
-      shell: curl -fsSL https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
+    - name: Download Helm
+      get_url:
+        url: https://get.helm.sh/helm-v3.14.4-linux-amd64.tar.gz
+        dest: /tmp/helm.tar.gz
+
+    - name: Extract Helm
+      unarchive:
+        src: /tmp/helm.tar.gz
+        dest: /tmp
+        remote_src: yes
+
+    - name: Move Helm binary
+      command: mv /tmp/linux-amd64/helm /usr/local/bin/helm
       args:
         creates: /usr/local/bin/helm
 
