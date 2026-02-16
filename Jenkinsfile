@@ -3,9 +3,9 @@ pipeline {
 
     environment {
         AWS_DEFAULT_REGION = "eu-west-3"
-        TFVARS_FILE       = "prod.tfvars"
-        TERRAFORM_DIR     = "shopnow-infra"
-        ANSIBLE_DIR       = "ansible"
+        TFVARS_FILE        = "prod.tfvars"
+        TERRAFORM_DIR      = "shopnow-infra"
+        ANSIBLE_DIR        = "ansible"
     }
 
     stages {
@@ -61,7 +61,7 @@ pipeline {
                         mkdir -p ../${ANSIBLE_DIR}
                         cat <<EOF > ../${ANSIBLE_DIR}/inventory.ini
 [Ubuntu_Servers]
-${publicIp} ansible_user=ubuntu
+${publicIp} ansible_user=ubuntu ansible_ssh_common_args='-o StrictHostKeyChecking=no'
 EOF
                         """
                     }
@@ -71,12 +71,23 @@ EOF
 
         stage('Run Ansible Playbook') {
             steps {
-                sshagent(credentials: ['ec2-ubuntu-key']) {
-                    dir(env.ANSIBLE_DIR) {
+                dir(env.ANSIBLE_DIR) {
+
+                    withCredentials([
+                        sshUserPrivateKey(
+                            credentialsId: 'ec2-ubuntu-key',
+                            keyFileVariable: 'SSH_KEY',
+                            usernameVariable: 'SSH_USER'
+                        )
+                    ]) {
+
                         sh '''
-                          ansible-playbook \
-                            -i inventory.ini \
-                            install-devops-tools.yml
+                        chmod 600 $SSH_KEY
+                        ansible-playbook \
+                          -i inventory.ini \
+                          --private-key $SSH_KEY \
+                          -u $SSH_USER \
+                          install-devops-tools.yml
                         '''
                     }
                 }
