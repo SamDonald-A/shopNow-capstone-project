@@ -2,10 +2,11 @@ pipeline {
     agent any
 
     environment {
-        AWS_DEFAULT_REGION = "eu-west-3"
-        TFVARS_FILE        = "prod.tfvars"
-        TERRAFORM_DIR      = "shopnow-infra"
-        ANSIBLE_DIR        = "ansible"
+        AWS_DEFAULT_REGION      = "eu-west-3"
+        TFVARS_FILE             = "prod.tfvars"
+        TERRAFORM_DIR           = "shopnow-infra"
+        ANSIBLE_DIR             = "ansible"
+        ANSIBLE_HOST_KEY_CHECKING = "False"
     }
 
     stages {
@@ -60,13 +61,13 @@ pipeline {
                         sh """
                         mkdir -p ../${ANSIBLE_DIR}
 
-                        # Create inventory
+                        # Generate clean inventory (NO ansible_user inside)
                         cat <<EOF > ../${ANSIBLE_DIR}/inventory.ini
 [Ubuntu_Servers]
-${publicIp} ansible_user=ubuntu ansible_ssh_common_args='-o StrictHostKeyChecking=no'
+${publicIp}
 EOF
 
-                        # Create playbook dynamically
+                        # Generate playbook
                         cat <<EOF > ../${ANSIBLE_DIR}/install-devops-tools.yml
 ---
 - name: Install basic tools
