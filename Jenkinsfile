@@ -81,14 +81,13 @@ EOF
                         )
                     ]) {
 
-                        sh '''
-                        chmod 600 $SSH_KEY
+                        sh """
                         ansible-playbook \
                           -i inventory.ini \
-                          --private-key $SSH_KEY \
-                          -u $SSH_USER \
+                          --private-key ${SSH_KEY} \
+                          -u ${SSH_USER} \
                           install-devops-tools.yml
-                        '''
+                        """
                     }
                 }
             }
