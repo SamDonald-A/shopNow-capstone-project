@@ -2,10 +2,10 @@ pipeline {
     agent any
 
     environment {
-        AWS_DEFAULT_REGION      = "eu-west-3"
-        TFVARS_FILE             = "prod.tfvars"
-        TERRAFORM_DIR           = "shopnow-infra"
-        ANSIBLE_DIR             = "ansible"
+        AWS_DEFAULT_REGION        = "eu-west-3"
+        TFVARS_FILE               = "prod.tfvars"
+        TERRAFORM_DIR             = "shopnow-infra"
+        ANSIBLE_DIR               = "ansible"
         ANSIBLE_HOST_KEY_CHECKING = "False"
     }
 
@@ -53,21 +53,27 @@ pipeline {
             steps {
                 dir(env.TERRAFORM_DIR) {
                     script {
+
                         def publicIp = sh(
                             script: "terraform output -raw public_ip",
                             returnStdout: true
                         ).trim()
 
+                        echo "Terraform returned Public IP: ${publicIp}"
+
+                        // 🚨 STOP PIPELINE if IP is empty
+                        if (!publicIp) {
+                            error("Terraform did not return a public IP. Stopping pipeline.")
+                        }
+
                         sh """
                         mkdir -p ../${ANSIBLE_DIR}
 
-                        # Generate clean inventory (NO ansible_user inside)
                         cat <<EOF > ../${ANSIBLE_DIR}/inventory.ini
 [Ubuntu_Servers]
 ${publicIp}
 EOF
 
-                        # Generate playbook
                         cat <<EOF > ../${ANSIBLE_DIR}/install-devops-tools.yml
 ---
 - name: Install basic tools
