@@ -95,13 +95,13 @@ EOF
 
     post {
         success {
-            echo "✅ Terraform APPLY + Ansible completed successfully"
+            echo " Terraform APPLY + Ansible completed successfully"
         }
         failure {
-            echo "❌ Pipeline failed — check logs"
+            echo " Pipeline failed — check logs"
         }
         always {
-            echo "ℹ️ Pipeline execution finished"
+            echo " Pipeline execution finished"
         }
     }
 }
