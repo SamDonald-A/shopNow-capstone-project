@@ -2,107 +2,68 @@
 - name: Install DevOps tools on Ubuntu EC2
   hosts: Ubuntu_Servers
   become: yes
-  gather_facts: yes
-
-  vars:
-    kubectl_version: "v1.29.2"
-    eksctl_version: "v0.174.0"
-
-    apt_packages:
-      - docker.io
-      - unzip
-      - curl
-      - ca-certificates
-      - gnupg
-      - lsb-release
-      - apt-transport-https
 
   tasks:
 
-    # ---------------- Base Packages ----------------
-    - name: Update apt cache
+    # ---------------- Base ----------------
+    - name: Update apt
       apt:
         update_cache: yes
 
-    - name: Install base packages
+    - name: Install required packages
       apt:
-        name: "{{ apt_packages }}"
+        name:
+          - docker.io
+          - unzip
+          - curl
+          - ca-certificates
+          - gnupg
+          - lsb-release
+          - software-properties-common
         state: present
 
-    # ---------------- Docker ----------------
-    - name: Enable and start Docker
+    - name: Enable Docker
       service:
         name: docker
         state: started
         enabled: yes
 
     # ---------------- kubectl ----------------
-    - name: Install kubectl
-      get_url:
-        url: "https://dl.k8s.io/release/{{ kubectl_version }}/bin/linux/amd64/kubectl"
-        dest: /usr/local/bin/kubectl
-        mode: '0755'
+    - name: Install kubectl via snap
+      snap:
+        name: kubectl
+        classic: yes
+        state: present
 
     # ---------------- AWS CLI ----------------
-    - name: Download AWS CLI v2
-      get_url:
-        url: https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip
-        dest: /tmp/awscliv2.zip
-        mode: '0644'
+    - name: Install AWS CLI via apt
+      apt:
+        name: awscli
+        state: present
 
-    - name: Unzip AWS CLI
-      unarchive:
-        src: /tmp/awscliv2.zip
-        dest: /tmp
-        remote_src: yes
+    # ---------------- Helm ----------------
+    - name: Install Helm via snap
+      snap:
+        name: helm
+        classic: yes
+        state: present
 
-    - name: Install or Update AWS CLI
-      command: /tmp/aws/install --update
+    # ---------------- Terraform ----------------
+    - name: Install Terraform via snap
+      snap:
+        name: terraform
+        classic: yes
+        state: present
 
     # ---------------- eksctl ----------------
     - name: Download eksctl
       get_url:
-        url: "https://github.com/weaveworks/eksctl/releases/download/{{ eksctl_version }}/eksctl_Linux_amd64.tar.gz"
+        url: https://github.com/weaveworks/eksctl/releases/latest/download/eksctl_Linux_amd64.tar.gz
         dest: /tmp/eksctl.tar.gz
 
-    - name: Install eksctl
+    - name: Extract eksctl
       unarchive:
         src: /tmp/eksctl.tar.gz
         dest: /usr/local/bin
         remote_src: yes
         mode: '0755'
-
-    # ---------------- Helm ----------------
-    - name: Download Helm
-      get_url:
-        url: https://get.helm.sh/helm-v3.14.4-linux-amd64.tar.gz
-        dest: /tmp/helm.tar.gz
-
-    - name: Extract Helm
-      unarchive:
-        src: /tmp/helm.tar.gz
-        dest: /tmp
-        remote_src: yes
-
-    - name: Move Helm binary
-      command: mv /tmp/linux-amd64/helm /usr/local/bin/helm
-      args:
-        creates: /usr/local/bin/helm
-
-    # ---------------- Terraform ----------------
-    - name: Add HashiCorp GPG key
-      shell: |
-        curl -fsSL https://apt.releases.hashicorp.com/gpg | \
-        gpg --dearmor -o /usr/share/keyrings/hashicorp-archive-keyring.gpg
-      args:
-        creates: /usr/share/keyrings/hashicorp-archive-keyring.gpg
-
-    - name: Add HashiCorp repository
-      apt_repository:
-        repo: "deb [signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] https://apt.releases.hashicorp.com {{ ansible_distribution_release }} main"
-        state: present
-
-    - name: Install Terraform
-      apt:
-        name: terraform
-        state: present
