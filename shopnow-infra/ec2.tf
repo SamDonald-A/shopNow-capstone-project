@@ -3,6 +3,7 @@ resource "aws_instance" "ubuntu"{
   instance_type =  var.instance_type
   subnet_id     =  module.vpc.public_subnets[0]
   key_name      =  var.key_name
+  associate_public_ip_address = true
 
   tags = {
     Name = var.tag_name
