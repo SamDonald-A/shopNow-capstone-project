@@ -33,18 +33,21 @@ pipeline {
             }
         }
 
-        stage('Terraform Plan') {
+        // ✅ Direct Apply (No tfplan file anymore)
+        stage('Terraform Apply') {
             steps {
                 dir(env.TERRAFORM_DIR) {
-                    sh "terraform plan -var-file=${TFVARS_FILE} -out=tfplan"
+                    sh "terraform apply -auto-approve -var-file=${TFVARS_FILE}"
                 }
             }
         }
 
-        stage('Terraform Apply') {
+        // ✅ Debug (optional but very helpful)
+        stage('Debug Terraform State') {
             steps {
                 dir(env.TERRAFORM_DIR) {
-                    sh 'terraform apply -auto-approve tfplan'
+                    sh 'terraform state list'
+                    sh 'terraform output'
                 }
             }
         }
@@ -61,7 +64,6 @@ pipeline {
 
                         echo "Terraform returned Public IP: ${publicIp}"
 
-                        // 🚨 STOP PIPELINE if IP is empty
                         if (!publicIp) {
                             error("Terraform did not return a public IP. Stopping pipeline.")
                         }
@@ -105,7 +107,6 @@ EOF
         stage('Run Ansible Playbook') {
             steps {
                 dir(env.ANSIBLE_DIR) {
-
                     withCredentials([
                         sshUserPrivateKey(
                             credentialsId: 'ec2-ubuntu-key',
@@ -128,13 +129,14 @@ EOF
 
     post {
         success {
-            echo "Terraform APPLY + Ansible completed successfully"
+            echo " Terraform APPLY + Ansible completed successfully"
         }
         failure {
-            echo "Pipeline failed — check logs"
+            echo " Pipeline failed: check logs"
         }
         always {
-            echo "Pipeline execution finished"
+            echo " Pipeline execution finished"
         }
     }
 }
+
