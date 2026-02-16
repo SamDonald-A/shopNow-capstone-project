@@ -76,18 +76,17 @@ EOF
                     withCredentials([
                         sshUserPrivateKey(
                             credentialsId: 'ec2-ubuntu-key',
-                            keyFileVariable: 'SSH_KEY',
-                            usernameVariable: 'SSH_USER'
+                            keyFileVariable: 'SSH_KEY'
                         )
                     ]) {
 
-                        sh """
+                        sh '''
                         ansible-playbook \
                           -i inventory.ini \
-                          --private-key ${SSH_KEY} \
-                          -u ${SSH_USER} \
+                          --private-key "$SSH_KEY" \
+                          -u ubuntu \
                           install-devops-tools.yml
-                        """
+                        '''
                     }
                 }
             }
