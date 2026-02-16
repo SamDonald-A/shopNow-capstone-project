@@ -48,7 +48,7 @@ pipeline {
             }
         }
 
-        stage('Generate Ansible Inventory') {
+        stage('Generate Ansible Files') {
             steps {
                 dir(env.TERRAFORM_DIR) {
                     script {
@@ -59,9 +59,35 @@ pipeline {
 
                         sh """
                         mkdir -p ../${ANSIBLE_DIR}
+
+                        # Create inventory
                         cat <<EOF > ../${ANSIBLE_DIR}/inventory.ini
 [Ubuntu_Servers]
 ${publicIp} ansible_user=ubuntu ansible_ssh_common_args='-o StrictHostKeyChecking=no'
+EOF
+
+                        # Create playbook dynamically
+                        cat <<EOF > ../${ANSIBLE_DIR}/install-devops-tools.yml
+---
+- name: Install basic tools
+  hosts: Ubuntu_Servers
+  become: yes
+
+  tasks:
+    - name: Update apt cache
+      apt:
+        update_cache: yes
+
+    - name: Install Docker
+      apt:
+        name: docker.io
+        state: present
+
+    - name: Start Docker
+      service:
+        name: docker
+        state: started
+        enabled: yes
 EOF
                         """
                     }
@@ -95,13 +121,13 @@ EOF
 
     post {
         success {
-            echo " Terraform APPLY + Ansible completed successfully"
+            echo "Terraform APPLY + Ansible completed successfully"
         }
         failure {
-            echo " Pipeline failed — check logs"
+            echo "Pipeline failed — check logs"
         }
         always {
-            echo " Pipeline execution finished"
+            echo "Pipeline execution finished"
         }
     }
 }
