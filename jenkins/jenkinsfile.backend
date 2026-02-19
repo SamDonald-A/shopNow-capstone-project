@@ -1,0 +1,127 @@
+pipeline {
+  agent any
+
+  parameters {
+    string(name: 'IMAGE_TAG', defaultValue: '', description: 'Optional image tag override')
+  }
+
+  environment {
+    // 🔹 Regions
+    ECR_REGION        = 'eu-west-2'
+    EKS_REGION        = 'eu-west-3'
+    EKS_CLUSTER_NAME  = 'sam-eks-cluster-shopnow-prod'
+
+    // 🔹 ECR Details
+    ECR_REGISTRY      = '975050024946.dkr.ecr.eu-west-2.amazonaws.com/sam-shopnow-backend'
+    ECR_REPOSITORY    = 'sam-shopnow-backend'
+
+    // 🔹 AWS Credentials
+    AWS_CREDENTIALS   = 'aws-credentials-id'
+
+    // 🔹 Helm Deployment
+    RELEASE_NAME      = 'shopnow-backend'
+    NAMESPACE         = 'shopnow-demo'
+    CHART_PATH        = 'kubernetes/helm/charts/backend'
+  }
+
+  stages {
+
+    stage('Checkout') {
+      steps {
+        checkout scm
+      }
+    }
+
+    stage('Set Image Tag') {
+      steps {
+        script {
+          if (params.IMAGE_TAG?.trim()) {
+            env.FINAL_IMAGE_TAG = params.IMAGE_TAG
+          } else {
+            env.FINAL_IMAGE_TAG = sh(
+              script: "git rev-parse --short HEAD",
+              returnStdout: true
+            ).trim()
+          }
+          echo "Using Image Tag: ${env.FINAL_IMAGE_TAG}"
+        }
+      }
+    }
+
+    stage('Build & Push Docker Image') {
+      steps {
+        dir('backend') {
+
+          withCredentials([[
+            $class: 'AmazonWebServicesCredentialsBinding',
+            credentialsId: "${AWS_CREDENTIALS}"
+          ]]) {
+
+            sh '''
+              echo "Logging into ECR (${ECR_REGION})..."
+
+              aws ecr get-login-password --region ${ECR_REGION} | \
+              docker login --username AWS --password-stdin ${ECR_REGISTRY}
+
+              echo "Building Docker image..."
+              docker build -t ${ECR_REGISTRY}/${ECR_REPOSITORY}:${FINAL_IMAGE_TAG} .
+
+              echo "Pushing image to ECR..."
+              docker push ${ECR_REGISTRY}/${ECR_REPOSITORY}:${FINAL_IMAGE_TAG}
+            '''
+          }
+        }
+      }
+    }
+
+    stage('Deploy to EKS with Helm') {
+      steps {
+        withCredentials([[
+          $class: 'AmazonWebServicesCredentialsBinding',
+          credentialsId: "${AWS_CREDENTIALS}"
+        ]]) {
+
+          sh '''
+            echo "Connecting to EKS cluster: ${EKS_CLUSTER_NAME}"
+            echo "Region: ${EKS_REGION}"
+
+            aws eks update-kubeconfig \
+              --region ${EKS_REGION} \
+              --name ${EKS_CLUSTER_NAME}
+
+            echo "Deploying backend to EKS using Helm..."
+
+            helm upgrade --install ${RELEASE_NAME} ${CHART_PATH} \
+              --namespace ${NAMESPACE} --create-namespace \
+              --set image.repository=${ECR_REGISTRY}/${ECR_REPOSITORY} \
+              --set image.tag=${FINAL_IMAGE_TAG} \
+              --wait --timeout 5m
+
+            echo "Waiting for deployment rollout..."
+            kubectl rollout status deployment/${RELEASE_NAME} \
+              -n ${NAMESPACE} --timeout=3m
+          '''
+        }
+      }
+    }
+
+    stage('Publish Image Tag') {
+      steps {
+        writeFile file: 'backend-image-tag.txt', text: "${FINAL_IMAGE_TAG}"
+        archiveArtifacts artifacts: 'backend-image-tag.txt', fingerprint: true
+      }
+    }
+  }
+
+  post {
+    always {
+      cleanWs()
+    }
+    success {
+      echo "✅ Backend deployed successfully to EKS (eu-west-3)!"
+    }
+    failure {
+      echo "❌ Backend deployment failed!"
+    }
+  }
+}

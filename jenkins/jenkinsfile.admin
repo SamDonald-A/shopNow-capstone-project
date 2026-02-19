@@ -1,0 +1,143 @@
+pipeline {
+    agent any
+
+    environment {
+        // 🔹 Regions
+        ECR_REGION        = 'eu-west-2'
+        EKS_REGION        = 'eu-west-3'
+        EKS_CLUSTER_NAME  = 'sam-eks-cluster-shopnow-prod'
+
+        // 🔹 Service Info
+        SERVICE_NAME      = 'admin'
+        SERVICE_DIR       = 'admin'
+        K8S_NAMESPACE     = 'shopnow-demo'
+
+        // 🔹 ECR
+        ECR_REPOSITORY    = 'sam-shopnow-admin'
+
+        // 🔹 Helm Chart Path
+        CHART_PATH        = 'kubernetes/helm/charts/admin'
+
+        // 🔹 AWS Credentials
+        AWS_CREDENTIALS   = 'aws-credentials-id'
+    }
+
+    options {
+        timestamps()
+        timeout(time: 30, unit: 'MINUTES')
+    }
+
+    stages {
+
+        stage('Checkout') {
+            steps {
+                checkout scm
+            }
+        }
+
+        stage('Initialize') {
+            steps {
+                withCredentials([[
+                    $class: 'AmazonWebServicesCredentialsBinding',
+                    credentialsId: "${AWS_CREDENTIALS}"
+                ]]) {
+
+                    script {
+                        env.AWS_ACCOUNT_ID = sh(
+                            script: "aws sts get-caller-identity --query Account --output text",
+                            returnStdout: true
+                        ).trim()
+
+                        env.ECR_REGISTRY = "${env.AWS_ACCOUNT_ID}.dkr.ecr.${ECR_REGION}.amazonaws.com"
+                        env.IMAGE_TAG = "${SERVICE_NAME}-${BUILD_NUMBER}"
+
+                        env.FULL_IMAGE_NAME =
+                            "${env.ECR_REGISTRY}/${ECR_REPOSITORY}:${IMAGE_TAG}"
+
+                        env.LATEST_IMAGE_NAME =
+                            "${env.ECR_REGISTRY}/${ECR_REPOSITORY}:${SERVICE_NAME}-latest"
+
+                        echo "🏗 Versioned Image: ${env.FULL_IMAGE_NAME}"
+                        echo "🏷 Latest Image: ${env.LATEST_IMAGE_NAME}"
+                    }
+                }
+            }
+        }
+
+        stage('Build Docker Image') {
+            steps {
+                dir("${SERVICE_DIR}") {
+                    sh """
+                        docker build -t ${SERVICE_NAME}:${BUILD_NUMBER} .
+                    """
+                }
+            }
+        }
+
+        stage('Push to ECR') {
+            steps {
+                withCredentials([[
+                    $class: 'AmazonWebServicesCredentialsBinding',
+                    credentialsId: "${AWS_CREDENTIALS}"
+                ]]) {
+
+                    sh """
+                        echo "Logging into ECR (${ECR_REGION})..."
+
+                        aws ecr get-login-password --region ${ECR_REGION} | \
+                        docker login --username AWS --password-stdin ${ECR_REGISTRY}
+
+                        docker tag ${SERVICE_NAME}:${BUILD_NUMBER} ${FULL_IMAGE_NAME}
+                        docker tag ${SERVICE_NAME}:${BUILD_NUMBER} ${LATEST_IMAGE_NAME}
+
+                        docker push ${FULL_IMAGE_NAME}
+                        docker push ${LATEST_IMAGE_NAME}
+                    """
+                }
+            }
+        }
+
+        stage('Deploy to EKS with Helm') {
+            steps {
+                withCredentials([[
+                    $class: 'AmazonWebServicesCredentialsBinding',
+                    credentialsId: "${AWS_CREDENTIALS}"
+                ]]) {
+
+                    sh """
+                        echo "Connecting to EKS cluster: ${EKS_CLUSTER_NAME}"
+                        echo "Region: ${EKS_REGION}"
+
+                        aws eks update-kubeconfig \
+                          --region ${EKS_REGION} \
+                          --name ${EKS_CLUSTER_NAME}
+
+                        echo "Deploying admin service using Helm..."
+
+                        helm upgrade --install ${SERVICE_NAME} ${CHART_PATH} \
+                          --namespace ${K8S_NAMESPACE} --create-namespace \
+                          --set image.repository=${ECR_REGISTRY}/${ECR_REPOSITORY} \
+                          --set image.tag=${IMAGE_TAG} \
+                          --wait --timeout 5m
+
+                        echo "Waiting for rollout..."
+                        kubectl rollout status deployment/${SERVICE_NAME} \
+                          -n ${K8S_NAMESPACE} --timeout=3m
+                    """
+                }
+            }
+        }
+    }
+
+    post {
+        success {
+            echo "✅ Admin deployed successfully to EKS (eu-west-3)!"
+        }
+        failure {
+            echo "❌ Admin deployment failed!"
+        }
+        always {
+            cleanWs()
+        }
+    }
+}

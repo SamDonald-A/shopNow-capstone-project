@@ -7,6 +7,7 @@ pipeline {
         TERRAFORM_DIR             = "shopnow-infra"
         ANSIBLE_DIR               = "ansible"
         ANSIBLE_HOST_KEY_CHECKING = "False"
+        EKS_CLUSTER_NAME          = "sam-eks-cluster-shopnow-prod" 
     }
 
     stages {
@@ -33,7 +34,6 @@ pipeline {
             }
         }
 
-        // ✅ Direct Apply (No tfplan file anymore)
         stage('Terraform Apply') {
             steps {
                 dir(env.TERRAFORM_DIR) {
@@ -42,13 +42,42 @@ pipeline {
             }
         }
 
-        // ✅ Debug (optional but very helpful)
         stage('Debug Terraform State') {
             steps {
                 dir(env.TERRAFORM_DIR) {
                     sh 'terraform state list'
                     sh 'terraform output'
                 }
+            }
+        }
+
+        // 🔥 NEW: Configure kubectl for EKS
+        stage('Configure kubectl') {
+            steps {
+                sh '''
+                aws eks update-kubeconfig \
+                  --region $AWS_DEFAULT_REGION \
+                  --name $EKS_CLUSTER_NAME
+                '''
+            }
+        }
+
+        // 🔥 NEW: Deploy MongoDB using Helm
+        stage('Deploy MongoDB') {
+            steps {
+                sh '''
+                echo "Deploying MongoDB via Helm..."
+
+                helm upgrade --install mongo ./kubernetes/helm/mongo \
+                  --namespace shopnow-demo \
+                  --create-namespace
+
+                echo "Waiting for MongoDB StatefulSet to be ready..."
+
+                kubectl rollout status statefulset/mongo \
+                  -n shopnow-demo \
+                  --timeout=180s
+                '''
             }
         }
 
@@ -129,14 +158,13 @@ EOF
 
     post {
         success {
-            echo " Terraform APPLY + Ansible completed successfully"
+            echo "Terraform + MongoDB + Ansible completed successfully"
         }
         failure {
-            echo " Pipeline failed: check logs"
+            echo "Pipeline failed: check logs"
         }
         always {
-            echo " Pipeline execution finished"
+            echo "Pipeline execution finished"
         }
     }
 }
-

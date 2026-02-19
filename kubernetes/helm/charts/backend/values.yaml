@@ -1,7 +1,7 @@
 replicaCount: 1
 
 image:
-  repository: 975050024946.dkr.ecr.ap-southeast-1.amazonaws.com/shopnow/backend
+  repository: 975050024946.dkr.ecr.eu-west-2.amazonaws.com/sam-shopnow-backend
   tag: latest
   pullPolicy: IfNotPresent
 
@@ -16,8 +16,7 @@ config:
 
 secret:
   enabled: true
-  MONGODB_URI: mongodb://shopuser:ShopNowPass123@mongo-0.mongo-headless.shopnow-demo.svc.cluster.local:27017/shopnow?authSource=admin
-
+  MONGODB_URI: mongodb://shopuser:ShopNowPass123@mongo:27017/shopnow?authSource=admin
 resources:
   requests:
     cpu: "100m"
@@ -31,3 +30,6 @@ hpa:
   minReplicas: 1
   maxReplicas: 3
   targetCPUUtilizationPercentage: 80
+
+
+# mongodb://shopuser:ShopNowPass123@mongo-0.mongo-headless.shopnow-demo.svc.cluster.local:27017/shopnow?authSource=admin

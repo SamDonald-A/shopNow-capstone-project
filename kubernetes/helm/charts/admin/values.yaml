@@ -1,7 +1,7 @@
 replicaCount: 1
 
 image:
-  repository: 975050024946.dkr.ecr.ap-southeast-1.amazonaws.com/shopnow/admin
+  repository: 975050024946.dkr.ecr.eu-west-2.amazonaws.com/sam-shopnow-admin
   tag: latest
   pullPolicy: IfNotPresent
 
@@ -20,7 +20,7 @@ nginx:
 
       # Admin API - proxy to backend for aryan-admin (general catch-all)
       location /aryan-admin/api/ {
-        proxy_pass http://backend:5000/api/;
+        proxy_pass http://backend-service:5000/api/;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
