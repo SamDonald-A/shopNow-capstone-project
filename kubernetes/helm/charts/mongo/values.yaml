@@ -11,7 +11,7 @@ service:
 
 stateful:
   volume:
-    storageClassName: gp3-ssd
+    storageClassName: gp2
     storage: 5Gi
 
 resources:
