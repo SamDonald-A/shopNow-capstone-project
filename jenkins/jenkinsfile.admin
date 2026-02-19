@@ -131,7 +131,7 @@ pipeline {
 
     post {
         success {
-            echo "✅ Admin deployed successfully to EKS (eu-west-3)!"
+            echo "✅ Admin deployed successfully to EKS!"
         }
         failure {
             echo "❌ Admin deployment failed!"
