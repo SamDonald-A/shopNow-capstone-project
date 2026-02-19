@@ -68,7 +68,7 @@ pipeline {
                 sh '''
                 echo "Deploying MongoDB via Helm..."
 
-                helm upgrade --install mongo ./kubernetes/helm/mongo \
+                helm upgrade --install mongo ./kubernetes/helm/charts/mongo \
                   --namespace shopnow-demo \
                   --create-namespace
 
