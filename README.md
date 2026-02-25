@@ -305,7 +305,7 @@ Manual download and installation
  →  rm -rf linux-amd64 helm-v3.12.0-linux-amd64.tar.gz
  →  helm version*
 
-# Verify installation once again
+## Verify installation once again
  →  *git --version
  →  aws --version
  →  eksctl version
@@ -317,7 +317,7 @@ Manual download and installation
 <img width="975" height="354" alt="image" src="https://github.com/user-attachments/assets/a1bd55c1-6ede-404e-91f6-ce5d394c5950" />
 
 
-# Add IAM Policies for the Jenkins EC2 server to Access EKS, ECR, EBS, S3, IAM and CloudWatch
+## Add IAM Policies for the Jenkins EC2 server to Access EKS, ECR, EBS, S3, IAM and CloudWatch
 
 We see that no IAM is being attached here
 
