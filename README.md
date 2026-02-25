@@ -1,3 +1,437 @@
+# End-to-End DevOps Pipeline for a Web Application with CI/CD
+## Objectives: To Deploy application Using End-to-End Devops Pipline
+## Problem Statement
+DevOps teams require a CI/CD pipeline to streamline the development and deployment process, ensuring that changes are consistently tested, built, and deployed across environments. Using Jenkins as the CI/CD orchestrator, this project will implement an automated pipeline for a Dockerized application that deploys to Kubernetes on AWS EKS. Jenkins will also automate infrastructure provisioning, configuration management, and deployment, reducing manual intervention and improving efficiency.
+
+## Project Goals
+1. Design an application architecture that includes load balancing, container orchestration, and monitoring on AWS.
+2. Provision AWS infrastructure using Terraform, including VPC, subnets, and EKS clusters.
+3. Automate configuration management with Ansible to streamline server setup and application configuration.
+4. Deploy the application on Kubernetes within AWS EKS, ensuring scalability and resilience.
+5. Implement Jenkins CI/CD for continuous integration and deployment from code changes to production.
+6. Set up monitoring with Prometheus and Grafana to monitor infrastructure and application performance.
+   
+## Additional Tools for CI/CD Integration
+- Jenkins: For orchestrating the CI/CD pipeline to automate testing, building, and deployment.
+- Docker: For building container images as part of the CI pipeline.
+- Kubernetes CLI (kubectl): For managing and deploying resources to EKS within the Jenkins pipeline.
+- Jenkins Plugins: Docker, Kubernetes, and AWS CLI plugins for seamless integration with cloud infrastructure.
+
+# Project Sprints:
+
+## Sprint 1: Architecture Design, Dockerization, and Jenkins Setup
+- Tasks:
+  - Design the application architecture for deployment on AWS EKS.
+  - Dockerize the web application by creating a Dockerfile and storing the image in AWS ECR.
+  - Set up a Jenkins server on AWS EC2 and configure necessary plugins (Docker, Kubernetes, AWS CLI).
+  - Configure Jenkins to access EKS and AWS resources using credentials and AWS IAM roles.
+  - Set up Git integration for Jenkins to trigger builds based on code changes.
+- Goal: Complete the application architecture, Dockerize the application, and establish a Jenkins server for CI/CD.
+
+## Sprint 2: AWS Infrastructure Provisioning with Terraform and Jenkins Integration
+- Tasks:
+  - Write Terraform scripts for AWS resources: VPC, EKS cluster, subnets, security groups, and EC2 instances.
+  - Create a Jenkins job to automate the Terraform infrastructure provisioning process.
+  - Test the Terraform job on Jenkins, ensuring that infrastructure is provisioned consistently across environments.
+  - Store Terraform state files securely in AWS S3 for consistent multi-user access.
+- Goal: Automate AWS infrastructure provisioning through Jenkins and Terraform, enabling reproducible environments.
+
+## Sprint 3: Configuration Management with Ansible and Jenkins Pipeline
+- Tasks:
+  - Write Ansible playbooks to configure EC2 instances, install Docker, kubectl, and other dependencies.
+  - Create a Jenkins pipeline job to run Ansible playbooks for setting up and configuring resources on AWS.
+  - Ensure the Ansible job on Jenkins is triggered after the Terraform job completes, creating a seamless flow.
+  - Test the Ansible playbooks on infrastructure provisioned by Terraform to validate configurations.
+- Goal: Automate configuration management with Ansible through Jenkins, ensuring consistent and reliable server configurations.
+ 
+## Sprint 4: CI/CD Pipeline for Application Deployment on Kubernetes (EKS)
+- Tasks:
+  - Create a multi-stage Jenkins pipeline for the application, including stages for build, test, and deployment.
+  - Build the Docker image in the pipeline and push it to AWS ECR.
+  - Use Jenkins to run Kubernetes manifests (Deployment, Service) that deploy the application to EKS.
+  - Configure Kubernetes health checks and auto-scaling in the deployment pipeline.
+  - Test the end-to-end pipeline from code push to deployment on EKS, ensuring proper functionality.
+- Goal: Build a fully automated CI/CD pipeline that deploys the application to Kubernetes on AWS EKS.
+
+ 
+## Sprint 5: Monitoring Setup with Prometheus, Grafana, and Jenkins Alerts
+- Tasks:
+  - Install Prometheus in the EKS cluster for monitoring metrics and configure it to collect data from the application and nodes.
+  - Set up Grafana to visualize Prometheus metrics and create dashboards for application performance and resource health.
+  - Integrate Jenkins with Prometheus/Grafana to monitor job and infrastructure health.
+  - Set up alerting rules in Prometheus for critical metrics and configure Jenkins to send notifications for failed deployments or resource issues.
+  - Test monitoring and alerting, ensuring visibility into the health of the infrastructure and application.
+- Goal: Provide real-time monitoring and alerting using Prometheus, Grafana, and Jenkins notifications for efficient infrastructure management.
+ 
+## Sprint 6: Testing, Documentation, and Final Pipeline Automation
+- Tasks:
+  - Write test cases to validate application functionality, deployment success, and infrastructure integrity.
+  - Document each step in the Jenkins pipeline, Terraform, and Ansible setup, including configuration and troubleshooting.
+  - Automate the Jenkins job triggers for each stage of the pipeline (e.g., code change triggers build, build triggers deploy).
+  - Conduct final end-to-end testing to verify the stability of the CI/CD pipeline, monitoring, and infrastructure setup.
+  - Collect feedback and make adjustments as needed for a production-ready setup.
+- Goal: Finalize and document the CI/CD pipeline, testing its readiness for production deployment.
+ 
+# CI/CD Pipeline Stages in Jenkins
+
+## 1. Build Stage: 
+   - Triggers when code is pushed to the repository.
+   - Builds Docker images for the application and pushes them to AWS ECR.
+   
+## 2. Infrastructure Provisioning Stage:
+   - Runs Terraform scripts to provision infrastructure (VPC, EKS, EC2) on AWS.
+   - Stores Terraform state in AWS S3 for persistence and team collaboration.
+
+## 3. Configuration Management Stage:
+   - Runs Ansible playbooks to configure EC2 instances and Kubernetes nodes.
+   - Installs necessary dependencies and ensures security and access configurations.
+
+## 4. Deployment Stage:
+   - Deploys the application to the EKS cluster using Kubernetes manifests.
+   - Configures load balancing, auto-scaling, and health checks for resilient deployment.
+
+## 5. Testing and Monitoring Stage:
+   - Runs test scripts to validate application functionality post-deployment.
+   - Sets up monitoring with Prometheus and Grafana, with alerts configured for real-time notifications.
+
+
+# Summary of Deliverables by End of Project
+- End-to-End Jenkins CI/CD Pipeline: Fully automated pipeline with build, provisioning, configuration, deployment, testing, and monitoring stages.
+- Multi-Cloud AWS Infrastructure: Automated infrastructure setup using Terraform, deploying VPC, EKS, EC2, and S3 resources.
+- Configuration Management with Ansible: Ansible playbooks to automate server and application configurations on AWS.
+- Application Deployment on EKS: Scalable and resilient Kubernetes-based deployment on AWS EKS.
+- Monitoring and Alerts: Real-time monitoring with Prometheus and Grafana, with integrated alerts in Jenkins.
+- Comprehensive Documentation: Setup guides, usage instructions, and troubleshooting for Terraform, Ansible, Kubernetes, and Jenkins.
+
+Here's a detailed breakdown for the "Multi-Cloud Deployment and Management with Terraform" project. This project aims to help DevOps teams deploy and manage applications across multiple cloud providers, ensuring high availability, cost optimization, and disaster recovery using Infrastructure as Code (IaC) with Terraform.
+
+---
+
+# Sprint 1: Architecture Design, Dockerization, and Jenkins Setup
+
+## Setting-up Jenkins Server
+Create EC2 for Jenkins server - The server is t3-medium with 30GB Storage volume Included
+<img width="976" height="488" alt="image" src="https://github.com/user-attachments/assets/716f97a7-a3d0-4673-892b-66a18a29edd6" />
+
+SSH to the instance and run *sudo apt update*
+
+<img width="975" height="517" alt="image" src="https://github.com/user-attachments/assets/25e4e1cc-c219-4cd8-a9e3-de31e41fda11" />
+
+Then running *sudo apt install -y openjdk-17-jdk* to install the Java for Jenkins
+
+<img width="975" height="425" alt="image" src="https://github.com/user-attachments/assets/31121ca9-6b81-479a-b0f5-31d00523f302" />
+
+Verify installation    →   *java -version*
+
+<img width="975" height="227" alt="image" src="https://github.com/user-attachments/assets/031016fd-6635-40fa-b15a-fb7ae706b80b" />
+
+Add Jenkins GPG Key   →   *curl -fsSL https://pkg.jenkins.io/debian-stable/jenkins.io-2023.key | sudo tee /usr/share/keyrings/jenkins-keyring.asc > /dev/null*
+
+Add Jenkins Repository   →  *echo deb [signed-by=/usr/share/keyrings/jenkins-keyring.asc]
+https://pkg.jenkins.io/debian-stable binary/ | sudo tee  /etc/apt/sources.list.d/jenkins.list > /dev/null*
+
+<img width="975" height="100" alt="image" src="https://github.com/user-attachments/assets/c3e631fe-e4d7-464e-8e91-18128f39db0a" />
+
+Install Jenkins  →  *sudo apt install -y jenkins*
+
+<img width="975" height="419" alt="image" src="https://github.com/user-attachments/assets/fc7b006e-d674-4675-a0a2-a12bfe924c4f" />
+
+Check the status of Jenkins  → *sudo systemctl status jenkins*
+
+<img width="975" height="529" alt="image" src="https://github.com/user-attachments/assets/848ea818-1bb2-457d-91dc-c6ae3ce30bf0" />
+
+If not enabled run these commands to enable Jenkins and check the status
+→   *sudo systemctl enable jenkins*
+→   *sudo systemctl start jenkins*
+
+Open your public IP to see the Jenkins running on its default Port number http://<IP-Address>:8080/
+
+<img width="975" height="223" alt="image" src="https://github.com/user-attachments/assets/2a8e08af-ba9a-4d28-8fdd-fc7629145211" />
+
+If the IP address is failed to opening Jenkins server we need to update our security credentials for the Jenkins EC2
+
+<img width="975" height="502" alt="image" src="https://github.com/user-attachments/assets/144aaf30-49a4-41d6-8087-f4d5bcca7741" />
+
+Click on the Security Group under security tab
+
+<img width="975" height="375" alt="image" src="https://github.com/user-attachments/assets/eb9c0ea9-5946-4208-a13b-950a043b8e99" />
+
+Then Edit Inbound rules
+
+<img width="975" height="402" alt="image" src="https://github.com/user-attachments/assets/c16aba34-fb79-4353-9210-c7365d4fee06" />
+
+Then Add rules and save it
+
+<img width="975" height="423" alt="image" src="https://github.com/user-attachments/assets/5bf23e3e-5da6-4956-9af6-32e9bf5594f0" />
+
+Now Jenkins is Loading on the browser with 8080 Port
+
+<img width="975" height="500" alt="image" src="https://github.com/user-attachments/assets/4543fe42-51bd-4bcd-82dd-baf0ca3d5b52" />
+
+Now it asking Administration Password from the path /var/lib/jenkins/secrets/initialAdminPassword  where Jenkins installed
+
+Go to that path and copy the password
+
+<img width="975" height="204" alt="image" src="https://github.com/user-attachments/assets/f319cb0e-dec0-4a40-abad-90e789814bce" />
+
+
+Then past it here in the Jenkins server and click continue
+
+<img width="975" height="496" alt="image" src="https://github.com/user-attachments/assets/fe7926c6-112c-4a3a-ad3c-e93b817eccd4" />
+
+
+
+Click Install suggested plugin
+
+<img width="975" height="498" alt="image" src="https://github.com/user-attachments/assets/93218a1c-76cb-4e52-a71d-f2f1d2405cc1" />
+<img width="975" height="496" alt="image" src="https://github.com/user-attachments/assets/ac5c3994-0741-4fdd-b231-0557e8d4729d" />
+
+Enter required information here
+<img width="975" height="498" alt="image" src="https://github.com/user-attachments/assets/34473be4-a79f-4ef4-8cff-d7a10abfe9c3" />
+
+<img width="975" height="498" alt="image" src="https://github.com/user-attachments/assets/49913b66-0ac0-4b1e-b3e7-1ca738442d32" />
+
+Click Start Using Jenkins
+
+<img width="975" height="498" alt="image" src="https://github.com/user-attachments/assets/f2977744-41a5-4e69-89cc-8d966f0c11cb" />
+
+We can see the Home page of Jenkins
+
+<img width="975" height="496" alt="image" src="https://github.com/user-attachments/assets/b0f40b1b-b16e-4d28-87bd-1d2d11768aeb" />
+
+## Setting up Git integration for Jenkins to trigger builds based on code changes
+
+Go to Github repository that we want to use in the Jenkins
+
+<img width="975" height="290" alt="image" src="https://github.com/user-attachments/assets/0536f786-0d41-4033-a4e5-66fbbe41bf37" />
+
+Go to settings  →  webhooks → Click Add Webhook
+
+<img width="975" height="498" alt="image" src="https://github.com/user-attachments/assets/718b50fa-bfa9-4a8e-bd84-cc247b6b5313" />
+
+Add payload url and select application/Json in the content type then click add Webhook
+
+The default payload for Jenkins → *http://<PUBLIC-IP-or-DNS>:8080/github-webhook/*
+
+<img width="975" height="498" alt="image" src="https://github.com/user-attachments/assets/433594b5-3051-44f3-823c-2c6dfa58fc8c" />
+
+<img width="975" height="208" alt="image" src="https://github.com/user-attachments/assets/ef268b65-69e2-4b5d-a721-1e747665768d" />
+
+
+## Configure the Jenkins EC2 server and the required plugin in Jenkins
+1.	Git
+2.	Awscli
+3.	Eksctl
+4.	Kubectl
+5.	Docker
+6.	Terraform 
+7.	Helm
+
+## 1. Git Installation
+
+After running → *sudo apt update to Install Git  →  sudo apt install -y git  →  git --version*
+
+<img width="975" height="500" alt="image" src="https://github.com/user-attachments/assets/0b7ebf11-28ce-4a3f-95af-41de7cd5c929" />
+
+
+## 2. Aws CLI v2 Installation
+
+After running →  *sudo apt install unzip 
+Run →  curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+ →  unzip awscliv2.zip
+ →  sudo ./aws/install
+ →  aws --version*
+
+<img width="975" height="348" alt="image" src="https://github.com/user-attachments/assets/ddee2633-a7dd-4bbb-b592-fbe65d882b25" />
+
+<img width="975" height="100" alt="image" src="https://github.com/user-attachments/assets/e4eec19d-26a7-445a-b798-47c43eed30f6" />
+
+## 3. Kubectl Installation
+
+ →  *curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+ →  sudo install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
+ →  kubectl version --client*
+
+<img width="975" height="238" alt="image" src="https://github.com/user-attachments/assets/3d0e5dfe-3265-4330-a05a-1e8a0c6102ff" />
+
+
+## 4. Eksctl Installation
+
+ →  *curl --silent --location "https://github.com/weaveworks/eksctl/releases/latest/download/eksctl_$(uname -s)_amd64.tar.gz" | tar xz
+ →  sudo mv eksctl /usr/local/bin
+ →  eksctl version*
+
+<img width="975" height="190" alt="image" src="https://github.com/user-attachments/assets/7d5b1bb9-ef97-4b45-b5f6-6ddf605ae673" />
+
+## 5. Docker Installation
+
+ →  *sudo apt install -y ca-certificates curl gnupg lsb-release*
+
+Add Docker GPG key
+ →  *sudo mkdir -p /etc/apt/keyrings
+ →  curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg*
+
+Add Docker repo
+ →  *echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+ →  sudo apt update
+ →  sudo apt install -y docker-ce docker-ce-cli containerd.io docker-compose-plugin*
+
+Add user to docker group
+ →  *sudo usermod -aG docker $USER
+ →  newgrp docker
+ →  docker --version*
+
+<img width="975" height="175" alt="image" src="https://github.com/user-attachments/assets/d4c440ec-8517-4da9-8af8-9a609827cd12" />
+
+## 6. Terraform Installation
+
+ → *curl -fsSL https://apt.releases.hashicorp.com/gpg | sudo gpg --dearmor -o /usr/share/keyrings/hashicorp-archive-keyring.gpg
+ →  echo "deb [signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] https://apt.releases.hashicorp.com $(lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/hashicorp.list
+ →  sudo apt update
+ →  sudo apt install -y terraform
+ →  terraform version*
+
+<img width="975" height="127" alt="image" src="https://github.com/user-attachments/assets/4c385c98-84a7-4133-8c7b-1c8ed6c357f7" />
+
+## 7. Helm Installation
+
+Official helm script
+ → *curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash*
+
+Manual download and installation
+ →  *curl -LO https://get.helm.sh/helm-v3.12.0-linux-amd64.tar.gz
+ →  tar -zxvf helm-v3.12.0-linux-amd64.tar.gz
+ →  sudo mv linux-amd64/helm /usr/local/bin/helm
+ →  rm -rf linux-amd64 helm-v3.12.0-linux-amd64.tar.gz
+ →  helm version*
+
+# Verify installation once again
+ →  *git --version
+ →  aws --version
+ →  eksctl version
+ →  kubectl version --client
+ →  docker --version
+ →  terraform version
+ →  helm version*
+ 
+<img width="975" height="354" alt="image" src="https://github.com/user-attachments/assets/a1bd55c1-6ede-404e-91f6-ce5d394c5950" />
+
+
+# Add IAM Policies for the Jenkins EC2 server to Access EKS, ECR, EBS, S3, IAM and CloudWatch
+
+We see that no IAM is being attached here
+
+<img width="975" height="494" alt="image" src="https://github.com/user-attachments/assets/90927f19-f557-492a-8c6e-43ed8ab6902d" />
+
+Modify the IAM for this Jenkins server - Go to Action and Select Modify IAM role under Security
+
+<img width="975" height="298" alt="image" src="https://github.com/user-attachments/assets/eb6fef27-fe96-49ae-bdef-5580f919f9ef" />
+
+Click Create New IAM role
+
+<img width="975" height="296" alt="image" src="https://github.com/user-attachments/assets/3eb1230e-58e7-48e8-bf16-155432359bc0" />
+
+Click Create Role
+
+<img width="975" height="329" alt="image" src="https://github.com/user-attachments/assets/611d1c53-d801-413a-9f18-2053184997dc" />
+
+<img width="975" height="404" alt="image" src="https://github.com/user-attachments/assets/63c6ed08-7c81-4e74-aaa8-54c796d244e2" />
+
+Select the policies that you want to add it in the IAM role for the Jenkins Server
+
+<img width="975" height="385" alt="image" src="https://github.com/user-attachments/assets/0a3aff3f-57b5-47f0-a8b1-6f443a973bd7" />
+
+Give a name and click create role
+
+<img width="975" height="410" alt="image" src="https://github.com/user-attachments/assets/15348b05-d1b0-4c1e-ac30-bc78df8712c0" />
+
+<img width="975" height="396" alt="image" src="https://github.com/user-attachments/assets/97479a1f-b1c8-4926-a043-31db60c9873d" />
+
+<img width="975" height="425" alt="image" src="https://github.com/user-attachments/assets/8308efe8-f455-46d5-933c-fb8229e356de" />
+
+Now attach this role to the Jenkins server
+
+Select new IAM Role
+
+<img width="975" height="256" alt="image" src="https://github.com/user-attachments/assets/53b89775-32bd-4181-8d0d-514e4e17fdf0" />
+
+And click Update IAM role
+
+<img width="975" height="244" alt="image" src="https://github.com/user-attachments/assets/4c61b3ba-a131-4d7f-bc2d-675256be2c60" />
+
+<img width="975" height="300" alt="image" src="https://github.com/user-attachments/assets/3c2e8da8-0795-4196-9904-c8f0b22d6306" />
+
+Run  →  *aws sts get-caller-identity*  to verify the role being successfully added
+
+<img width="975" height="242" alt="image" src="https://github.com/user-attachments/assets/c97eeb3e-9322-4121-a5b0-ad5d595dc36c" />
+
+Also Configure AWS CLI to connect with aws  →  *aws configure*
+
+<img width="975" height="148" alt="image" src="https://github.com/user-attachments/assets/593accb5-5f80-4e61-9544-3f07ca92f81a" />
+
+Check you can access the aws resource  →  *aws list-clusters --region eu-west-2*
+
+<img width="975" height="204" alt="image" src="https://github.com/user-attachments/assets/3c000f36-1eb3-431e-903f-186901f7d0b8" />
+
+## Add all required plugin to Jenkins →  Go to Jenkins settings and click Plugins
+
+<img width="975" height="409" alt="image" src="https://github.com/user-attachments/assets/6d8d1c21-539c-4a8b-8675-57ed60402483" />
+
+Select your plugin under Available Plugins and click Install
+
+<img width="975" height="418" alt="image" src="https://github.com/user-attachments/assets/8c7530c9-f265-4bfc-8210-658c6a9f040e" />
+
+<img width="975" height="423" alt="image" src="https://github.com/user-attachments/assets/3ab15c30-8df9-4450-b8e0-bc3aec8748d5" />
+
+Check the App Locally before building the Docker Image
+<img width="975" height="519" alt="image" src="https://github.com/user-attachments/assets/89298199-029a-46c0-9d38-69d2606ca07e" />
+
+<img width="975" height="517" alt="image" src="https://github.com/user-attachments/assets/787e84ab-1e9b-44ef-b70f-09a40df229ef" />
+
+<img width="975" height="519" alt="image" src="https://github.com/user-attachments/assets/3197caa3-e6d9-44be-9165-d7599ad35f3c" />
+
+<img width="975" height="519" alt="image" src="https://github.com/user-attachments/assets/d020c64e-bb45-4225-968c-80b3e3f4871f" />
+
+<img width="975" height="519" alt="image" src="https://github.com/user-attachments/assets/6e970ceb-3d44-4197-b908-0ed75ae545ae" />
+
+Start the Docker Engine and build the images
+
+<img width="975" height="533" alt="image" src="https://github.com/user-attachments/assets/bf71bbc2-79ae-498f-ac6a-cd5659da6a29" />
+
+ Build images   
+ →    *docker build -t shopnow-backend:latest .
+ →    docker build -t shopnow-frontend:latest .
+ →    docker build -t shopnow-admin:latest .*
+
+ <img width="975" height="423" alt="image" src="https://github.com/user-attachments/assets/b18353b9-daea-49a7-a648-cda65748e33a" />
+
+<img width="975" height="331" alt="image" src="https://github.com/user-attachments/assets/65dcec58-f2b7-4be0-b146-78ae0ac59d59" />
+
+## Create ECR Repositories for each services and Tag images for pushing to its respective repos
+
+
+Creating repository and tag image
+  →  *aws ecr create-repository --repository-name sam-shopnow-frontend --region eu-west-2
+  →  docker tag shopnow-frontend:latest 975050024946.dkr.ecr.eu-west-2.amazonaws.com/sam-shopnow-frontend:latest*
+
+
+<img width="975" height="477" alt="image" src="https://github.com/user-attachments/assets/74e83f79-8e3d-4f6e-9dbc-19fae774828c" />
+
+## Make sure Logged in between Docker and AWS
+
+ →  aws ecr get-login-password --region eu-west-2 | docker login --username AWS --password-stdin 975050024946.dkr.ecr.eu-west-2.amazonaws.com  
+
+<img width="975" height="285" alt="image" src="https://github.com/user-attachments/assets/9ec89724-e741-419e-adda-ec41f1e1fbbf" />
+
+Push the Images and verify in the AWS ECR in console
+  →  *docker push 975050024946.dkr.ecr.eu-west-2.amazonaws.com/sam-shopnow-backend:latest*
+
+<img width="975" height="394" alt="image" src="https://github.com/user-attachments/assets/b90446aa-378f-4d7e-8f18-ac819f002901" />
+
+<img width="975" height="292" alt="image" src="https://github.com/user-attachments/assets/4cc24680-65c0-44a2-973a-786ae7eaf0aa" />
+
+
+
 
 # 🛒 ShopNow E-Commerce - Kubernetes Learning Project
 
