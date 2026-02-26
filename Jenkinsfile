@@ -158,13 +158,13 @@ EOF
 
     post {
         success {
-            echo "Terraform + MongoDB + Ansible completed successfully"
+            echo " --> Terraform + MongoDB + Ansible completed successfully"
         }
         failure {
-            echo "Pipeline failed: check logs"
+            echo " --> Pipeline failed: check logs"
         }
         always {
-            echo "Pipeline execution finished"
+            echo " --> Pipeline execution finished"
         }
     }
 }
