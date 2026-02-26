@@ -12,7 +12,7 @@ pipeline {
     EKS_CLUSTER_NAME  = 'sam-eks-cluster-shopnow-prod'
 
     // 🔹 ECR Details
-    ECR_REGISTRY      = '975050024946.dkr.ecr.eu-west-2.amazonaws.com/sam-shopnow-frontend'
+    ECR_REGISTRY      = '975050024946.dkr.ecr.eu-west-2.amazonaws.com'
     ECR_REPOSITORY    = 'sam-shopnow-frontend'
 
     // 🔹 Jenkins AWS Credentials ID
