@@ -2,7 +2,11 @@ pipeline {
   agent any
 
   parameters {
-    string(name: 'IMAGE_TAG', defaultValue: '', description: 'Optional image tag override')
+    string(
+      name: 'IMAGE_TAG',
+      defaultValue: '',
+      description: 'Optional image tag override'
+    )
   }
 
   environment {
@@ -11,17 +15,21 @@ pipeline {
     EKS_REGION        = 'eu-west-3'
     EKS_CLUSTER_NAME  = 'sam-eks-cluster-shopnow-prod'
 
-    // 🔹 ECR Details
-    ECR_REGISTRY      = '975050024946.dkr.ecr.eu-west-2.amazonaws.com'
+    // 🔹 ECR
     ECR_REPOSITORY    = 'sam-shopnow-frontend'
 
-    // 🔹 Jenkins AWS Credentials ID
+    // 🔹 Jenkins AWS Credentials
     AWS_CREDENTIALS   = 'aws-credentials-id'
 
     // 🔹 Helm Deployment
     RELEASE_NAME      = 'shopnow-frontend'
     NAMESPACE         = 'shopnow-demo'
     CHART_PATH        = 'kubernetes/helm/charts/frontend'
+  }
+
+  options {
+    timestamps()
+    timeout(time: 30, unit: 'MINUTES')
   }
 
   stages {
@@ -54,12 +62,27 @@ pipeline {
 
           withCredentials([[
             $class: 'AmazonWebServicesCredentialsBinding',
-            credentialsId: "${AWS_CREDENTIALS}"
+            credentialsId: "${AWS_CREDENTIALS}",
+            accessKeyVariable: 'AWS_ACCESS_KEY_ID',
+            secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'
           ]]) {
 
-            sh '''
-              echo "Logging into ECR (${ECR_REGION})..."
+            script {
+              env.AWS_ACCOUNT_ID = sh(
+                script: "aws sts get-caller-identity --query Account --output text",
+                returnStdout: true
+              ).trim()
 
+              env.ECR_REGISTRY =
+                "${env.AWS_ACCOUNT_ID}.dkr.ecr.${ECR_REGION}.amazonaws.com"
+            }
+
+            sh """
+              export AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+              export AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+              export AWS_DEFAULT_REGION=${ECR_REGION}
+
+              echo "Logging into ECR..."
               aws ecr get-login-password --region ${ECR_REGION} | \
               docker login --username AWS --password-stdin ${ECR_REGISTRY}
 
@@ -68,7 +91,7 @@ pipeline {
 
               echo "Pushing image to ECR..."
               docker push ${ECR_REGISTRY}/${ECR_REPOSITORY}:${FINAL_IMAGE_TAG}
-            '''
+            """
           }
         }
       }
@@ -78,29 +101,41 @@ pipeline {
       steps {
         withCredentials([[
           $class: 'AmazonWebServicesCredentialsBinding',
-          credentialsId: "${AWS_CREDENTIALS}"
+          credentialsId: "${AWS_CREDENTIALS}",
+          accessKeyVariable: 'AWS_ACCESS_KEY_ID',
+          secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'
         ]]) {
 
-          sh '''
-            echo "Connecting to EKS cluster: ${EKS_CLUSTER_NAME}"
-            echo "Region: ${EKS_REGION}"
+          sh """
+            export AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+            export AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+            export AWS_DEFAULT_REGION=${EKS_REGION}
 
+            echo "Verifying AWS identity..."
+            aws sts get-caller-identity
+
+            echo "Updating kubeconfig..."
             aws eks update-kubeconfig \
               --region ${EKS_REGION} \
               --name ${EKS_CLUSTER_NAME}
 
-            echo "Deploying with Helm..."
+            echo "Testing cluster connectivity..."
+            kubectl get nodes
+
+            echo "Deploying frontend via Helm..."
 
             helm upgrade --install ${RELEASE_NAME} ${CHART_PATH} \
-              --namespace ${NAMESPACE} --create-namespace \
+              --namespace ${NAMESPACE} \
+              --create-namespace \
               --set image.repository=${ECR_REGISTRY}/${ECR_REPOSITORY} \
               --set image.tag=${FINAL_IMAGE_TAG} \
               --wait --timeout 5m
 
-            echo "Waiting for deployment rollout..."
+            echo "Checking rollout status..."
             kubectl rollout status deployment/${RELEASE_NAME} \
-              -n ${NAMESPACE} --timeout=3m
-          '''
+              -n ${NAMESPACE} \
+              --timeout=3m
+          """
         }
       }
     }
@@ -118,7 +153,7 @@ pipeline {
       cleanWs()
     }
     success {
-      echo "✅ Frontend deployed successfully to EKS (eu-west-3)!"
+      echo "✅ Frontend deployed successfully to EKS (${EKS_REGION})!"
     }
     failure {
       echo "❌ Frontend deployment failed!"

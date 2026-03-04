@@ -15,10 +15,10 @@ pipeline {
         // 🔹 ECR
         ECR_REPOSITORY    = 'sam-shopnow-admin'
 
-        // 🔹 Helm Chart Path
+        // 🔹 Helm Chart
         CHART_PATH        = 'kubernetes/helm/charts/admin'
 
-        // 🔹 AWS Credentials
+        // 🔹 Jenkins AWS Credentials ID
         AWS_CREDENTIALS   = 'aws-credentials-id'
     }
 
@@ -39,7 +39,9 @@ pipeline {
             steps {
                 withCredentials([[
                     $class: 'AmazonWebServicesCredentialsBinding',
-                    credentialsId: "${AWS_CREDENTIALS}"
+                    credentialsId: "${AWS_CREDENTIALS}",
+                    accessKeyVariable: 'AWS_ACCESS_KEY_ID',
+                    secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'
                 ]]) {
 
                     script {
@@ -48,8 +50,11 @@ pipeline {
                             returnStdout: true
                         ).trim()
 
-                        env.ECR_REGISTRY = "${env.AWS_ACCOUNT_ID}.dkr.ecr.${ECR_REGION}.amazonaws.com"
-                        env.IMAGE_TAG = "${SERVICE_NAME}-${BUILD_NUMBER}"
+                        env.ECR_REGISTRY =
+                            "${env.AWS_ACCOUNT_ID}.dkr.ecr.${ECR_REGION}.amazonaws.com"
+
+                        env.IMAGE_TAG =
+                            "${SERVICE_NAME}-${BUILD_NUMBER}"
 
                         env.FULL_IMAGE_NAME =
                             "${env.ECR_REGISTRY}/${ECR_REPOSITORY}:${IMAGE_TAG}"
@@ -57,8 +62,8 @@ pipeline {
                         env.LATEST_IMAGE_NAME =
                             "${env.ECR_REGISTRY}/${ECR_REPOSITORY}:${SERVICE_NAME}-latest"
 
-                        echo "🏗 Versioned Image: ${env.FULL_IMAGE_NAME}"
-                        echo "🏷 Latest Image: ${env.LATEST_IMAGE_NAME}"
+                        echo "Versioned Image: ${env.FULL_IMAGE_NAME}"
+                        echo "Latest Image: ${env.LATEST_IMAGE_NAME}"
                     }
                 }
             }
@@ -78,12 +83,17 @@ pipeline {
             steps {
                 withCredentials([[
                     $class: 'AmazonWebServicesCredentialsBinding',
-                    credentialsId: "${AWS_CREDENTIALS}"
+                    credentialsId: "${AWS_CREDENTIALS}",
+                    accessKeyVariable: 'AWS_ACCESS_KEY_ID',
+                    secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'
                 ]]) {
 
                     sh """
-                        echo "Logging into ECR (${ECR_REGION})..."
+                        export AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+                        export AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+                        export AWS_DEFAULT_REGION=${ECR_REGION}
 
+                        echo "Logging into ECR..."
                         aws ecr get-login-password --region ${ECR_REGION} | \
                         docker login --username AWS --password-stdin ${ECR_REGISTRY}
 
@@ -101,28 +111,39 @@ pipeline {
             steps {
                 withCredentials([[
                     $class: 'AmazonWebServicesCredentialsBinding',
-                    credentialsId: "${AWS_CREDENTIALS}"
+                    credentialsId: "${AWS_CREDENTIALS}",
+                    accessKeyVariable: 'AWS_ACCESS_KEY_ID',
+                    secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'
                 ]]) {
 
                     sh """
-                        echo "Connecting to EKS cluster: ${EKS_CLUSTER_NAME}"
-                        echo "Region: ${EKS_REGION}"
+                        export AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+                        export AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+                        export AWS_DEFAULT_REGION=${EKS_REGION}
 
+                        echo "Verifying AWS Identity..."
+                        aws sts get-caller-identity
+
+                        echo "Updating kubeconfig..."
                         aws eks update-kubeconfig \
                           --region ${EKS_REGION} \
                           --name ${EKS_CLUSTER_NAME}
 
-                        echo "Deploying admin service using Helm..."
+                        echo "Testing cluster access..."
+                        kubectl get nodes
 
+                        echo "Deploying via Helm..."
                         helm upgrade --install ${SERVICE_NAME} ${CHART_PATH} \
-                          --namespace ${K8S_NAMESPACE} --create-namespace \
+                          --namespace ${K8S_NAMESPACE} \
+                          --create-namespace \
                           --set image.repository=${ECR_REGISTRY}/${ECR_REPOSITORY} \
                           --set image.tag=${IMAGE_TAG} \
                           --wait --timeout 5m
 
-                        echo "Waiting for rollout..."
+                        echo "Checking rollout status..."
                         kubectl rollout status deployment/${SERVICE_NAME} \
-                          -n ${K8S_NAMESPACE} --timeout=3m
+                          -n ${K8S_NAMESPACE} \
+                          --timeout=3m
                     """
                 }
             }
@@ -131,10 +152,10 @@ pipeline {
 
     post {
         success {
-            echo "✅ Admin deployed successfully to EKS!"
+            echo "Admin deployed successfully to EKS!"
         }
         failure {
-            echo "❌ Admin deployment failed!"
+            echo "Admin deployment failed!"
         }
         always {
             cleanWs()

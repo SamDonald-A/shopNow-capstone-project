@@ -11,8 +11,8 @@ service:
 
 stateful:
   volume:
-    storageClassName: gp2
-    storage: 5Gi
+    storageClassName: gp3
+    storage: 10Gi
 
 resources:
   requests:
