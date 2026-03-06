@@ -73,7 +73,7 @@ pipeline {
             steps {
                 dir("${SERVICE_DIR}") {
                     sh """
-                        docker build -t ${SERVICE_NAME}:${BUILD_NUMBER} .
+                        docker build --no-cache -t ${SERVICE_NAME}:${BUILD_NUMBER} .
                     """
                 }
             }
