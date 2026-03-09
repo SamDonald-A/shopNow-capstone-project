@@ -55,7 +55,7 @@ pipeline {
                             "${env.AWS_ACCOUNT_ID}.dkr.ecr.${ECR_REGION}.amazonaws.com"
 
                         env.IMAGE_TAG =
-                            "${SERVICE_NAME}-${BUILD_NUMBER}"
+                            "latest"
 
                         env.FULL_IMAGE_NAME =
                             "${env.ECR_REGISTRY}/${ECR_REPOSITORY}:${IMAGE_TAG}"
