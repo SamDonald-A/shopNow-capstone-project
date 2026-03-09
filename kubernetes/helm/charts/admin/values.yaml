@@ -3,7 +3,7 @@ replicaCount: 1
 image:
   repository: 975050024946.dkr.ecr.eu-west-2.amazonaws.com/sam-shopnow-admin
   tag: latest
-  pullPolicy: IfNotPresent
+  pullPolicy: Always
 
 service:
   type: ClusterIP
