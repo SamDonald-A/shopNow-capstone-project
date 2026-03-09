@@ -91,5 +91,6 @@ ingress:
   pathType: Prefix
   host: ""                      # optional host; leave blank for path-only routing
   annotations:
-    nginx.ingress.kubernetes.io/use-regex: "true"
-  ingressClassName: nginx
+    alb.ingress.kubernetes.io/scheme: internet-facing  # or internal if you want private
+    alb.ingress.kubernetes.io/target-type: ip
+  ingressClassName: alb
