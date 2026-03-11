@@ -680,19 +680,30 @@ One more query to check Pods
 
 ---
 
-We have achieved deploying the application on EKS in the compleate End-to-End CI/CD Pipline include using Terrafomr and Ansible
+# We have achieved deploying the application on EKS in the compleate End-to-End CI/CD Pipline include using Terrafomr and Ansible
+
 •	End-to-End Jenkins CI/CD Pipeline: Fully automated pipeline with build, provisioning, configuration, deployment, testing, and monitoring stages.
+
 •	Multi-Cloud AWS Infrastructure: Automated infrastructure setup using Terraform, deploying VPC, EKS, EC2, and S3 resources.
+
 •	Configuration Management with Ansible: Ansible playbooks to automate server and application configurations on AWS.
+
 •	Application Deployment on EKS: Scalable and resilient Kubernetes-based deployment on AWS EKS.
+
 •	Monitoring and Alerts: Real-time monitoring with Prometheus and Grafana, with integrated alerts in Jenkins.
+
 •	Comprehensive Documentation: Setup guides, usage instructions, and troubleshooting for Terraform, Ansible, Kubernetes, and Jenkins.
 
 ---
 
+Project completed by: Sam Donald A
+
 Documentation by: Sam Donald A
+
 Email: samdonaldand@gmail.com
+
 GitHub: https://github.com/SamDonald-A
+
 Website: www.samdonald.in
 
 ---
