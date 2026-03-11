@@ -217,7 +217,6 @@ The default payload for Jenkins → *http://<PUBLIC-IP-or-DNS>:8080/github-webho
 
 <img width="975" height="208" alt="image" src="https://github.com/user-attachments/assets/ef268b65-69e2-4b5d-a721-1e747665768d" />
 
-
 ## Configure the Jenkins EC2 server and the required plugin in Jenkins
 1.	Git
 2.	Awscli
@@ -576,8 +575,127 @@ Frontend UI with correct URL
 Admin UI with Correct URL
 <img width="975" height="496" alt="image" src="https://github.com/user-attachments/assets/66cfdb90-b7ad-44c4-b9ba-d384c3bfdd31" />
 
+---
 
+# Sprint 5: Monitoring Setup with Prometheus, Grafana, and Jenkins Alerts
+## Install Prometheus & Grafana in EKS
+→ Run this to get the source file to install
+*helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+helm repo update*
 
+→ Install Prometheus and Grafana in EKS via helm
+*helm upgrade --install monitoring prometheus-community/kube-prometheus-stack \
+--namespace monitoring \
+--create-namespace*
+
+→ Check installed and running pods
+*kubectl get pods -n monitoring*
+
+→ get the secret with base64 encoded for logging in to the grafana 
+*kubectl get secret monitoring-grafana \
+-n monitoring \
+-o jsonpath="{.data.admin-password}" | base64 --decode*
+
+<img width="985" height="386" alt="image" src="https://github.com/user-attachments/assets/99b23307-f012-4bde-93f2-951b543a6445" />
+
+<img width="923" height="439" alt="image" src="https://github.com/user-attachments/assets/81428795-8fd3-456f-ae78-1f6f6abb8e77" />
+
+Login by Opening your Ec2 instance with :3000 use the secret that you get in the previous command
+
+<img width="975" height="450" alt="image" src="https://github.com/user-attachments/assets/cca20c83-a290-4f7d-8426-0197a03d8b14" />
+
+<img width="975" height="494" alt="image" src="https://github.com/user-attachments/assets/478ef745-1123-41f6-8d7c-3f6dc6d02992" />
+
+Go to Data source under connection tab in menu and click Prometheus
+
+<img width="975" height="492" alt="image" src="https://github.com/user-attachments/assets/c863880c-1796-469b-be6a-be263cc927d8" />
+
+<img width="975" height="498" alt="image" src="https://github.com/user-attachments/assets/64ecfa79-fcb8-4c47-b305-1b69093ea386" />
+
+Scroll down and click test 
+
+<img width="975" height="490" alt="image" src="https://github.com/user-attachments/assets/5e0af904-0220-4572-9db0-13909a7e6284" />
+
+<img width="975" height="285" alt="image" src="https://github.com/user-attachments/assets/1f06f0b9-7370-4aa4-902d-9801ca4a01a0" />
+
+Next Go to Dashboard click New dropdown → Import and start adding dashboards to see the metrics
+
+<img width="975" height="498" alt="image" src="https://github.com/user-attachments/assets/b33e60d8-975c-4e94-8996-6161e4704c18" />
+
+<img width="975" height="494" alt="image" src="https://github.com/user-attachments/assets/c713439a-c977-4e8c-8d01-8a6fd943716c" />
+
+We have to add dashboard here, click that *grafana.com/dashboards* to see available dashboard
+
+Search for Dashboard → Kubernetes Cluster Monitoring (Via Prometheus)
+
+<img width="975" height="494" alt="image" src="https://github.com/user-attachments/assets/0231e7b1-9d5e-4cf5-988c-f7c72b20b1f1" />
+
+<img width="975" height="500" alt="image" src="https://github.com/user-attachments/assets/98b7087d-2752-4fde-8704-b29c38c3c827" />
+
+Scroll down and you can see the ID number → ID 3119
+
+<img width="975" height="496" alt="image" src="https://github.com/user-attachments/assets/f5dcf30e-7e44-46fb-ac1c-99b83fb26c63" />
+
+Come back to the Import and enter the ID here and click Load and select the Dashboard to import
+
+<img width="975" height="490" alt="image" src="https://github.com/user-attachments/assets/6f8f6262-68f7-4c6b-b2aa-d4b1edb79a57" />
+
+Scroll down and Select the Data source here and Import
+
+<img width="975" height="490" alt="image" src="https://github.com/user-attachments/assets/726628e1-5966-403b-b2b2-00fd610a7063" />
+
+## Now we can see the dashboard added and can see the metrics
+
+<img width="975" height="500" alt="image" src="https://github.com/user-attachments/assets/0f9032f5-7c7c-48db-866f-981c490adf49" />
+
+<img width="975" height="496" alt="image" src="https://github.com/user-attachments/assets/b282d371-6f19-4490-96d8-09006632d839" />
+
+<img width="975" height="492" alt="image" src="https://github.com/user-attachments/assets/c09129e9-6cef-4dd6-9509-0030e3c3d662" />
+
+Import more dashboard for more metrics
+
+<img width="975" height="490" alt="image" src="https://github.com/user-attachments/assets/0b2f80c5-e02c-4f01-984e-2e85a7888989" />
+
+<img width="975" height="490" alt="image" src="https://github.com/user-attachments/assets/e966fb1a-64ea-4de7-b433-8a2104806ad0" />
+
+<img width="975" height="525" alt="image" src="https://github.com/user-attachments/assets/be2af1f4-22f1-4cec-a062-2a36205296e9" />
+
+<img width="975" height="496" alt="image" src="https://github.com/user-attachments/assets/1cc0c4c5-3fcf-48a7-8ef5-c3b549336475" />
+
+## Let’s Verify that we are actually receiving Realtime data by Querying using Explore menu
+
+<img width="975" height="496" alt="image" src="https://github.com/user-attachments/assets/7cb72e94-30da-47bd-b90d-0640f9f26223" />
+
+We can see data fetched in real time
+
+<img width="975" height="500" alt="image" src="https://github.com/user-attachments/assets/e3307732-1b8c-4f41-92f6-ae7b2be70ecd" />
+
+One more query to check Pods
+
+<img width="975" height="498" alt="image" src="https://github.com/user-attachments/assets/fa50ad64-dc7c-4072-8c16-6b7df2445b73" />
+
+## We can see the pods and name space
+
+<img width="975" height="490" alt="image" src="https://github.com/user-attachments/assets/7d650394-5cb9-40e7-ba39-d8dcbc3455e3" />
+
+---
+
+We have achieved deploying the application on EKS in the compleate End-to-End CI/CD Pipline include using Terrafomr and Ansible
+•	End-to-End Jenkins CI/CD Pipeline: Fully automated pipeline with build, provisioning, configuration, deployment, testing, and monitoring stages.
+•	Multi-Cloud AWS Infrastructure: Automated infrastructure setup using Terraform, deploying VPC, EKS, EC2, and S3 resources.
+•	Configuration Management with Ansible: Ansible playbooks to automate server and application configurations on AWS.
+•	Application Deployment on EKS: Scalable and resilient Kubernetes-based deployment on AWS EKS.
+•	Monitoring and Alerts: Real-time monitoring with Prometheus and Grafana, with integrated alerts in Jenkins.
+•	Comprehensive Documentation: Setup guides, usage instructions, and troubleshooting for Terraform, Ansible, Kubernetes, and Jenkins.
+
+---
+
+Documentation by: Sam Donald A
+Email: samdonaldand@gmail.com
+GitHub: https://github.com/SamDonald-A
+Website: www.samdonald.in
+
+---
 
 # 🛒 ShopNow E-Commerce - Kubernetes Learning Project
 
