@@ -430,6 +430,152 @@ Push the Images and verify in the AWS ECR in console
 
 <img width="975" height="292" alt="image" src="https://github.com/user-attachments/assets/4cc24680-65c0-44a2-973a-786ae7eaf0aa" />
 
+---
+# Sprint 2: AWS Infrastructure Provisioning with Terraform and Jenkins Integration
+
+## Create Terraform folders and .tf files for creating VPC and EKS 
+Run    →  *terraform init*
+<img width="975" height="354" alt="image" src="https://github.com/user-attachments/assets/c59d1ef5-3988-4a37-b221-bcc19d9c1f5a" />
+
+Make sure you created a bucket for state file to be stored and mentioned this bucket name in the backend in providers
+<img width="975" height="431" alt="image" src="https://github.com/user-attachments/assets/b66e5aae-608f-4fba-8fb5-2a5f2793cf73" />
+
+<img width="975" height="144" alt="image" src="https://github.com/user-attachments/assets/70b07c03-0393-45dd-802d-80ade77ad461" />
+
+Run  →  *terraform validate* to check all the terraform code
+<img width="975" height="169" alt="image" src="https://github.com/user-attachments/assets/b37b1c7f-095b-4373-8ea6-cafff452a7c9" />
+
+  →  *terraform plan --var-file=prod.tfvars*  to see the final plan that will be executed
+<img width="975" height="488" alt="image" src="https://github.com/user-attachments/assets/0b605beb-763d-4c79-b7d8-6711e707d2f6" />
+
+Now in Jenkins Click the New Items to select pipeline option
+<img width="975" height="290" alt="image" src="https://github.com/user-attachments/assets/38ebee9d-91e9-429b-9791-ee081354b06f" />
+
+Give a Name and select Pipeline and click *ok* 
+
+<img width="975" height="494" alt="image" src="https://github.com/user-attachments/assets/73c557f3-6f78-4cec-a8df-5254e206af2b" />
+
+
+In the opened settings, select trigger as SCM Poling, and then Under *SCM* select *Git*
+<img width="975" height="494" alt="image" src="https://github.com/user-attachments/assets/bdb068d8-0f06-4acb-9963-04094e18f7a0" />
+
+Then Click *Save*
+
+Provide git link and set branch
+<img width="975" height="490" alt="image" src="https://github.com/user-attachments/assets/b224bae1-b524-4e8e-a91c-f18437c815b5" />
+<img width="975" height="283" alt="image" src="https://github.com/user-attachments/assets/2b9a673d-2292-4122-a24b-05a6478e402e" />
+
+Create secret credentials in Jenkins 
+Settings → Credentials → Kind: AWS Credentials → Provide all the details and click create
+<img width="975" height="485" alt="image" src="https://github.com/user-attachments/assets/cf215c26-06d8-40d2-9a09-3e0743b641a0" />
+
+## The pipeline is ready on the webhook trigger to pull code and run the Jenkinsfile and create resources using Terraform scripts.
+
+Create *Jenkinsfile* for the terraform infrastructure provisioning and push the code for triggering the pipeline
+<img width="975" height="502" alt="image" src="https://github.com/user-attachments/assets/de40ce6f-9775-479f-9138-bea7791ff786" />
+
+<img width="975" height="288" alt="image" src="https://github.com/user-attachments/assets/3ea27f53-82a2-46d9-bac5-46fa645ca0e2" />
+
+
+## Pipeline is triggered and build success in creating aws resources by executing terraform
+<img width="975" height="443" alt="image" src="https://github.com/user-attachments/assets/c1430fc3-bb85-4e13-9bf2-448bfe722e76" />
+
+<img width="975" height="421" alt="image" src="https://github.com/user-attachments/assets/c641398f-1c39-4900-b49f-b4e623845cdc" />
+
+<img width="975" height="277" alt="image" src="https://github.com/user-attachments/assets/e9ae5892-0d24-4e5d-89f5-4b403bfb78e8" />
+
+But resources not created, lets debug the code in Jenkinsfile to work correctly
+After a Debugging code - push it to the repo to trigger the pipeline
+
+<img width="975" height="344" alt="image" src="https://github.com/user-attachments/assets/32ea3cab-edda-460c-af5a-a2738914189e" />
+<img width="975" height="492" alt="image" src="https://github.com/user-attachments/assets/1faf1e06-a5a6-4e10-b559-7ed1e8341fa5" />
+
+We can see that resources are created
+<img width="975" height="200" alt="image" src="https://github.com/user-attachments/assets/76392503-3db5-4d1b-8b9e-d13295944256" />
+<img width="975" height="235" alt="image" src="https://github.com/user-attachments/assets/fc689804-2914-4409-a909-c168581d3eaf" />
+
+After the resources created we can destroy them now for full project automation
+Add and Run *terraform destroy* in the Jenkins pipeline to destroy the resources by passing parameters in pipeline code (Optional)
+<img width="975" height="202" alt="image" src="https://github.com/user-attachments/assets/3d13d939-7b1a-4225-b355-7e3c545b2d80" />
+
+Terraform destroyed all the resources that were created before using terraform apply
+<img width="975" height="450" alt="image" src="https://github.com/user-attachments/assets/0d371dbd-28ad-45b5-944d-28e69530451c" />
+
+EKS cluster and VPC deleted
+<img width="975" height="252" alt="image" src="https://github.com/user-attachments/assets/07f9ab75-8cc8-45e7-8dfe-635f6fe3e711" />
+<img width="975" height="229" alt="image" src="https://github.com/user-attachments/assets/b99f0816-f44e-4182-9683-8e7ca7611747" />
+
+---
+
+# Sprint 3: Configuration Management with Ansible and Jenkins Pipeline
+
+## Create ansible playbook and update the Jenkins file to create resources and ansible to install tools in New EC2 instance
+
+*playbook.yml*
+<img width="975" height="504" alt="image" src="https://github.com/user-attachments/assets/da18da56-e3ca-459a-91a3-1e58fc62849a" />
+
+Jinkins file → This Jenkinsfile creates an inventory file on the runtime and takes the IP of the new EC2 instance from terraform output.tf and installs tools by doing ssh in to it.
+
+<img width="975" height="450" alt="image" src="https://github.com/user-attachments/assets/4652824a-7753-4d12-8f02-30df6b28a3fe" />
+
+## After pushing the code to the repo the pipeline executes and runs the scripts and pipeline is successful. Let’s cross verify the resources that are created in the AWS Management Console
+
+<img width="975" height="494" alt="image" src="https://github.com/user-attachments/assets/13d3e382-ba86-4503-973a-865b337e383e" />
+
+<img width="975" height="323" alt="image" src="https://github.com/user-attachments/assets/fac50558-d8f6-4492-86d1-e72093b97964" />
+<img width="975" height="246" alt="image" src="https://github.com/user-attachments/assets/6b38e569-5d12-40b2-8bdc-e823f25450d8" />
+
+New EC2 also created 
+
+<img width="975" height="283" alt="image" src="https://github.com/user-attachments/assets/06a676e4-4148-4ecf-b85b-06fa8ad9f508" />
+<img width="975" height="133" alt="image" src="https://github.com/user-attachments/assets/35781bad-f80d-42f9-b640-e02522f52dca" />
+
+Lerts shh in to the EC2 and verify whether ansible installed tools or not
+<img width="975" height="285" alt="image" src="https://github.com/user-attachments/assets/443c2f70-a08f-491e-9b8f-b64222e891b5" />
+## Successfully Installed tools using Ansible
+
+---
+
+# Sprint 4: CI/CD Pipeline for Application Deployment on Kubernetes (EKS)
+
+Creating Frontend Jenkins Pipeline
+<img width="975" height="502" alt="image" src="https://github.com/user-attachments/assets/f5d31c99-c74c-40a5-8dc7-fd5f35c49be8" />
+
+Creating Backend Jenkins Pipeline
+<img width="975" height="521" alt="image" src="https://github.com/user-attachments/assets/e1b25545-cd5c-418e-8175-ccdc6d9eeda1" />
+
+Creating Admin Jenkins Pipeline
+<img width="975" height="519" alt="image" src="https://github.com/user-attachments/assets/afa82d87-64f5-4330-bb96-a182c41140a7" />
+
+## Create each pipeline separately
+<img width="1919" height="982" alt="image" src="https://github.com/user-attachments/assets/0d679656-3814-4fc3-a55b-f2f0a7043691" />
+
+Running Each Pipeline Including Terraform and Ansible in it 
+<img width="975" height="490" alt="image" src="https://github.com/user-attachments/assets/56f17127-0f8e-4714-b601-5277f18b769d" />
+
+Backend Pipeline
+<img width="975" height="496" alt="image" src="https://github.com/user-attachments/assets/29df430a-c88f-45d7-b218-1a9fde1a58b2" />
+
+Frontend Pipline
+<img width="975" height="496" alt="image" src="https://github.com/user-attachments/assets/7a361946-ae65-4e53-b9e5-46379ddaf166" />
+
+Admin Pipeline
+<img width="975" height="494" alt="image" src="https://github.com/user-attachments/assets/f897e246-a293-4c01-8669-1c97003f6a48" />
+
+## Pods are running successfully In EKS
+<img width="975" height="485" alt="image" src="https://github.com/user-attachments/assets/82c2829a-e8aa-4f68-8a8c-98eb9b22585b" />
+
+Lets accessing by port forwarding them 
+
+Frontend UI with correct URL
+<img width="975" height="496" alt="image" src="https://github.com/user-attachments/assets/94d2a6ea-c840-4c17-8bd9-819156146f25" />
+<img width="975" height="498" alt="image" src="https://github.com/user-attachments/assets/852df66a-8e94-499f-b03c-6e195bcea4e8" />
+<img width="975" height="500" alt="image" src="https://github.com/user-attachments/assets/4ac9b98d-ec39-46d6-88b1-b6d91e3d6484" />
+<img width="975" height="498" alt="image" src="https://github.com/user-attachments/assets/b8620890-7d43-42bc-8181-a216c1725445" />
+
+Admin UI with Correct URL
+<img width="975" height="496" alt="image" src="https://github.com/user-attachments/assets/66cfdb90-b7ad-44c4-b9ba-d384c3bfdd31" />
+
 
 
 
