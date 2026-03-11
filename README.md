@@ -680,7 +680,7 @@ One more query to check Pods
 
 ---
 
-# We have achieved deploying the application on EKS in the compleate End-to-End CI/CD Pipline include using Terrafomr and Ansible
+# We have achieved deploying the application on EKS in the complete End-to-End CI/CD Pipeline including Terraform and Ansible
 
 •	End-to-End Jenkins CI/CD Pipeline: Fully automated pipeline with build, provisioning, configuration, deployment, testing, and monitoring stages.
 
